@@ -1,5 +1,10 @@
-import llaisys
+import sys
+import os
 
+python_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "python"))
+sys.path.insert(0, python_dir)
+
+import llaisys
 import torch
 from test_utils import *
 import argparse
