@@ -1,0 +1,7 @@
+CompileFlags:
+  Add: [-Iinclude]
+
+Style:
+  BasedOnStyle: LLVM
+  IndentWidth: 4
+  ColumnLimit: 0

@@ -6,13 +6,21 @@
 __C {
     struct LlaisysQwen2Meta {
         llaisysDataType_t dtype;
-        size_t nlayer, hs, nh, nkvh, dh, di, maxseq, voc;
-        float epsilon, theta;
-        int64_t end_token;
+        size_t nlayer, //多少层
+            hs,        //隐藏状态维度
+            nh,        // q的头数
+            nkvh,      // kv的头数
+            dh,        //每个注意力头的特征维度
+            di,        // Swi里面的
+            maxseq,    //最大token数
+            voc;       //词表大小
+        float epsilon, // rms里面的极小数
+            theta;     // rope里面的偏移
+        int64_t end_token;//结束符的token位置
     };
 
     struct LlaisysQwen2Weights {
-        llaisysTensor_t in_embed;
+        llaisysTensor_t in_embed; 
         llaisysTensor_t out_embed;
         llaisysTensor_t out_norm_w;   // a.k.a. model.norm.weight
         llaisysTensor_t *attn_norm_w; // a.k.a. input_layernorm.weight
