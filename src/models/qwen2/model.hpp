@@ -12,7 +12,7 @@ class Qwen2Model {
 private:
     LlaisysQwen2Meta meta_;
     llaisysDeviceType_t device_;
-    int *device_id_;
+    int device_id_;
     int ndevice_;
 
     LlaisysTensor in_embed_;                  // voc,hs
@@ -30,7 +30,6 @@ private:
     std::vector<llaisysTensor_t> mlp_gate_w_; //sw里面要训练的两个 di, hs
     std::vector<llaisysTensor_t> mlp_up_w_;   //di, hs
     std::vector<llaisysTensor_t> mlp_down_w_; //降维的， hs, di，这个转置一下就降成hs了
-
 
     std::vector<tensor_t> cache_k_;
     std::vector<tensor_t> cache_v_;
