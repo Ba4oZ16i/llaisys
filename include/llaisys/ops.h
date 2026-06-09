@@ -13,6 +13,8 @@ __C {
     __export void llaisysROPE(llaisysTensor_t out, llaisysTensor_t in, llaisysTensor_t pos_ids, float theta);
     __export void llaisysSelfAttention(llaisysTensor_t attn_val, llaisysTensor_t q, llaisysTensor_t k, llaisysTensor_t v, float scale);
     __export void llaisysSwiGLU(llaisysTensor_t out, llaisysTensor_t gate, llaisysTensor_t up);
+    __export void llaisysSampling(llaisysTensor_t idx, llaisysTensor_t val, llaisysTensor_t vals,
+                                   llaisysTensor_t temperature, llaisysTensor_t top_k, llaisysTensor_t top_p);
 }
 
 #endif

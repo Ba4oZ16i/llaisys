@@ -34,3 +34,13 @@ def load_ops(lib):
 
     lib.llaisysSwiGLU.argtypes = [llaisysTensor_t, llaisysTensor_t, llaisysTensor_t]
     lib.llaisysSwiGLU.restype = None
+
+    lib.llaisysSampling.argtypes = [
+        llaisysTensor_t,  # idx
+        llaisysTensor_t,  # val
+        llaisysTensor_t,  # vals
+        llaisysTensor_t,  # temperature
+        llaisysTensor_t,  # top_k
+        llaisysTensor_t,  # top_p
+    ]
+    lib.llaisysSampling.restype = None

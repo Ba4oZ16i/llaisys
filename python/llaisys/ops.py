@@ -53,3 +53,20 @@ class Ops:
     @staticmethod
     def swiglu(out: Tensor, gate: Tensor, up: Tensor):
         LIB_LLAISYS.llaisysSwiGLU(out.lib_tensor(), gate.lib_tensor(), up.lib_tensor())
+
+    @staticmethod
+    def sampling(idx: Tensor, val: Tensor, vals: Tensor,
+                 temperature=None, top_k=None, top_p=None):
+        """采样一个 token
+        temperature: Tensor, 标量 float，默认 None 表示 1.0
+        top_k: Tensor, 标量 int64，默认 None 表示不限制
+        top_p: Tensor, 标量 float，默认 None 表示 1.0
+        """
+        def _or_none(t):
+            return None if t is None else t.lib_tensor()
+        LIB_LLAISYS.llaisysSampling(
+            idx.lib_tensor(), val.lib_tensor(), vals.lib_tensor(),
+            _or_none(temperature),
+            _or_none(top_k),
+            _or_none(top_p),
+        )
