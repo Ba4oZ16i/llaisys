@@ -12,7 +12,7 @@ template <typename T>
 void linear_(T *out, const T *in, const T *weight, const T *bias,
              std::vector<size_t> in_shape, std::vector<size_t> weight_shape,
              bool has_bias) {
-    size_t cmp = 0;
+    #pragma omp parallel for collapse(2)
     for (size_t i = 0; i < in_shape[0]; i++) {
         for (size_t j = 0; j < weight_shape[0]; j++) {
             float sum = 0;
@@ -27,16 +27,16 @@ void linear_(T *out, const T *in, const T *weight, const T *bias,
             if (has_bias) {
                 if constexpr (std::is_same_v<T, llaisys::fp16_t> || std::is_same_v<T, llaisys::bf16_t>) {
                     sum += llaisys::utils::cast<float>(bias[j]);
-                    out[cmp++] = llaisys::utils::cast<T>(sum);
+                    out[i * weight_shape[0] + j] = llaisys::utils::cast<T>(sum);
                 } else {
                     sum += bias[j];
-                    out[cmp++] = sum;
+                    out[i * weight_shape[0] + j] = sum;
                 }
             } else {
                 if constexpr (std::is_same_v<T, llaisys::fp16_t> || std::is_same_v<T, llaisys::bf16_t>) {
-                    out[cmp++] = llaisys::utils::cast<T>(sum);
+                    out[i * weight_shape[0] + j] = llaisys::utils::cast<T>(sum);
                 } else {
-                    out[cmp++] = sum;
+                    out[i * weight_shape[0] + j] = sum;
                 }
             }
         }

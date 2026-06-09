@@ -88,6 +88,7 @@ target("llaisys-ops")
     set_warnings("all", "error")
     if not is_plat("windows") then
         add_cxflags("-fPIC", "-Wno-unknown-pragmas")
+        add_ldflags("-fopenmp")
     end
     
     add_files("src/ops/*/*.cpp")
@@ -124,6 +125,9 @@ target("llaisys")
 
     set_languages("cxx17")
     set_warnings("all", "error")
+    if not is_plat("windows") then
+        add_shflags("-fopenmp")
+    end
     add_files("src/llaisys/*.cc")
     add_files("src/llaisys/models/*.cc")
     set_installdir(".")

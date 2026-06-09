@@ -7,9 +7,10 @@
 
 template <typename T>
 void embedding_(T *out, const int64_t *index, const T *weight, size_t numel, size_t weight_shape) {
+    #pragma omp parallel for collapse(2)
     for (size_t i = 0; i < numel; i++) {
-        size_t temp = i * weight_shape;
         for (size_t j = 0; j < weight_shape; j++) {
+            size_t temp = i * weight_shape;
             out[temp + j] = weight[index[i] * weight_shape + j];
         }
     }
