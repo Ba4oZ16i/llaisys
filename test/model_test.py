@@ -45,7 +45,7 @@ if __name__ == "__main__":
     parser.add_argument("--device", default="cpu", choices=["cpu", "nvidia"], type=str)
     parser.add_argument("--model", default=None, type=str)
     parser.add_argument("--prompt", default="Who are you?", type=str)
-    parser.add_argument("--max_steps", default=256, type=int)
+    parser.add_argument("--max_steps", default=1024, type=int)
     parser.add_argument("--top_p", default=0.8, type=float)
     parser.add_argument("--top_k", default=50, type=int)
     parser.add_argument("--temperature", default=1.0, type=float)
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         while True:
             content = input()
             history.append({"role": "user", "content": content})
-
+            start_time=time.time()
             _, llaisys_output = llaisys_infer(
                 history,
                 tokenizer,
@@ -75,11 +75,12 @@ if __name__ == "__main__":
                 top_k=top_k,
                 temperature=temperature,
             )
-
+            end_time=time.time()
+            print(f"耗时：{(end_time-start_time):.2f}")
             idx = llaisys_output.find("</think>")
             if idx != -1:
                 llaisys_output = llaisys_output[idx + len("</think>"):]
-                
+    
             display = llaisys_output.strip()
             history.append({"role": "assistant", "content": llaisys_output})
             print(display, flush=True)

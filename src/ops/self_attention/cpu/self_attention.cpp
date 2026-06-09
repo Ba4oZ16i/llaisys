@@ -11,6 +11,7 @@
 template <typename T>
 void self_attention_(T *attn_val, const T *qq, const T *kk, const T *vv,
                      float scale, std::vector<size_t> q_shape, std::vector<size_t> kv_shape) {
+    #pragma omp parallel for
     for (size_t i = 0; i < q_shape[1]; i++) {
         size_t kvh = i / (q_shape[1] / kv_shape[1]);
         std::vector<float> A;

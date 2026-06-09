@@ -8,6 +8,7 @@
 
 template <typename T>
 void swiglu_(T *out, const T *gate, const T *up, size_t numel) {
+    #pragma omp parallel for
     for (size_t i = 0; i < numel; i++) {
         float temp = 0;
         float re = 0;

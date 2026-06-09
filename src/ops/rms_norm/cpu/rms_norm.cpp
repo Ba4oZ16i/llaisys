@@ -9,24 +9,26 @@
 
 template <typename T>
 void rms_norm_(T *out, const T *in, const T *weight, float eps, std::vector<size_t> shape) {
-    size_t cmp = 0;
+    #pragma omp parallel for
     for (size_t i = 0; i < shape[0]; i++) {
         float sum = 0;
         for (size_t j = 0; j < shape[1]; j++) {
+            size_t idx = i * shape[1] + j;
             if constexpr (std::is_same_v<T, llaisys::bf16_t> || std::is_same_v<T, llaisys::fp16_t>) {
-                sum += pow(llaisys::utils::cast<float>(in[i * shape[1] + j]), 2);
+                float v = llaisys::utils::cast<float>(in[idx]);
+                sum += v * v;
             } else {
-                sum += pow(in[i * shape[1] + j], 2);
+                sum += in[idx] * in[idx];
             }
         }
-        sum = sum / shape[1] + eps;
-        sum = std::sqrt(sum);
+        sum = std::sqrt(sum / shape[1] + eps);
         for (size_t j = 0; j < shape[1]; j++) {
+            size_t idx = i * shape[1] + j;
             if constexpr (std::is_same_v<T, llaisys::bf16_t> || std::is_same_v<T, llaisys::fp16_t>) {
-                out[cmp++] = llaisys::utils::cast<T>(
-                    llaisys::utils::cast<float>(weight[j]) * (llaisys::utils::cast<float>(in[i * shape[1] + j]) / sum));
+                out[idx] = llaisys::utils::cast<T>(
+                    llaisys::utils::cast<float>(weight[j]) * (llaisys::utils::cast<float>(in[idx]) / sum));
             } else {
-                out[cmp++] = weight[j] * (in[i * shape[1] + j] / sum);
+                out[idx] = weight[j] * (in[idx] / sum);
             }
         }
     }
