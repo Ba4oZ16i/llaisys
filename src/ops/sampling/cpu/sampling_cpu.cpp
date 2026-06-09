@@ -12,11 +12,13 @@ template <typename T>
 void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
                float temperature, int64_t top_k, float top_p) {
     std::vector<float> logits(numel);
+    float inv_temp = (temperature > 1e-6f) ? (1.0f / temperature) : 1.0f;
+    #pragma omp parallel for
     for (size_t i = 0; i < numel; i++) {
         if constexpr (std::is_same_v<T, llaisys::bf16_t> || std::is_same_v<T, llaisys::fp16_t>) {
-            logits[i] = temperature > 0 ? llaisys::utils::cast<float>(vals[i]) / temperature : llaisys::utils::cast<float>(vals[i]);
+            logits[i] = llaisys::utils::cast<float>(vals[i]) * inv_temp;
         } else {
-            logits[i] = temperature > 0 ? vals[i] / temperature : vals[i];
+            logits[i] = vals[i] * inv_temp;
         }
     }
     float max_val = logits[0];
@@ -25,10 +27,12 @@ void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
             max_val = logits[i];
     }
     float sum = 0;
+    #pragma omp parallel for reduction(+:sum)
     for (size_t i = 0; i < numel; i++) {
         logits[i] = std::exp(logits[i] - max_val);
         sum += logits[i];
     }
+    #pragma omp parallel for
     for (size_t i = 0; i < numel; i++) {
         logits[i] /= sum;
     }
@@ -37,14 +41,17 @@ void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
         std::vector<float> sorted = logits;
         std::sort(sorted.begin(), sorted.end(), std::greater<float>());
         float threshold = sorted[top_k - 1];
+        #pragma omp parallel for
         for (size_t i = 0; i < numel; i++) {
             if (logits[i] < threshold) {
                 logits[i] = 0;
             }
         }
         float new_sum = 0;
+        #pragma omp parallel for reduction(+:new_sum)
         for (size_t i = 0; i < numel; i++)
             new_sum += logits[i];
+        #pragma omp parallel for
         for (size_t i = 0; i < numel; i++)
             logits[i] /= new_sum;
     }
@@ -74,12 +81,12 @@ void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
         }
     }
 
-    float rand = (float)std::rand() / (float)RAND_MAX;
-    float chosesum = 0;
-    int64_t chosen = 0;
+    float rand_val = (float)std::rand() / (float)RAND_MAX;
+    float cumsum = 0;
+    int64_t chosen = numel - 1;
     for (size_t i = 0; i < numel; i++) {
-        chosesum += logits[i];
-        if (rand <= chosesum) {
+        cumsum += logits[i];
+        if (rand_val <= cumsum) {
             chosen = i;
             break;
         }

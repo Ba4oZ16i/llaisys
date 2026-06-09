@@ -142,7 +142,7 @@ if __name__ == "__main__":
     print("\nContents:")
     print(llaisys_output)
     print("\n")
-    print(f"Time elapsed: {(end_time - start_time):.2f}s\n")
+    print(f"耗时: {(end_time - start_time):.2f}s\n")
 
     if args.test:
         assert llaisys_tokens == tokens

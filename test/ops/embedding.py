@@ -1,8 +1,10 @@
 import sys
 import os
 
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, parent_dir)
+test_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+python_dir = os.path.abspath(os.path.join(test_dir, "..", "python"))
+sys.path.insert(0, test_dir)
+sys.path.insert(0, python_dir)
 import llaisys
 from test_utils import random_int_tensor, random_tensor, check_equal, benchmark
 

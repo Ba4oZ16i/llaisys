@@ -52,8 +52,11 @@ def load_models(lib):
     lib.llaisysQwen2ModelWeights.restype=c_void_p
 
     lib.llaisysQwen2ModelInfer.argtypes=[
-        c_void_p,              
-        POINTER(c_int64),       
-        c_size_t                    
+        c_void_p,
+        POINTER(c_int64),
+        c_size_t,
+        c_float,          # temperature
+        c_int64,           # top_k
+        c_float            # top_p
     ]
     lib.llaisysQwen2ModelInfer.restype=c_int64

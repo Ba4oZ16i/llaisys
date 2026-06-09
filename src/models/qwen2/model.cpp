@@ -14,7 +14,9 @@
 #include "../../ops/rope/op.hpp"
 #include "../../ops/self_attention/op.hpp"
 #include "../../ops/swiglu/op.hpp"
+#include "../../ops/argmax/op.hpp"
 #include "llaisys/tensor.h"
+
 
 namespace llaisys::models {
 Qwen2Model::Qwen2Model(LlaisysQwen2Meta meta, llaisysDeviceType_t device, int *device_id, int ndevice)
@@ -85,7 +87,7 @@ void Qwen2Model::fillWeights(LlaisysQwen2Weights *weights) {
     weights->mlp_down_w = mlp_down_w_.data();
 }
 
-int64_t Qwen2Model::infer(int64_t *token_ids, size_t ntoken) {
+int64_t Qwen2Model::infer(int64_t *token_ids, size_t ntoken, float temperature, int64_t top_k, float top_p) {
     if (ntoken <= cache_len_) {
         cache_len_ = 0;  // 新对话，清空 KV Cache
     }

@@ -1,5 +1,6 @@
 #include "llaisys/models/qwen2.h"
 #include "../../models/qwen2/model.hpp"
+#include <cstdint>
 
 __C {
     struct LlaisysQwen2Model {
@@ -23,7 +24,7 @@ __C {
         return &(model->weights);
     }
 
-    __export int64_t llaisysQwen2ModelInfer(struct LlaisysQwen2Model * model, int64_t * token_ids, size_t ntoken) {
-        return model->model->infer(token_ids, ntoken);
+    __export int64_t llaisysQwen2ModelInfer(struct LlaisysQwen2Model * model, int64_t * token_ids, size_t ntoken, float temperature, int64_t top_k, float top_p) {
+        return model->model->infer(token_ids, ntoken, temperature, top_k, top_p);
     }
 }

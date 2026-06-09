@@ -48,7 +48,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_steps", default=1024, type=int)
     parser.add_argument("--top_p", default=0.8, type=float)
     parser.add_argument("--top_k", default=50, type=int)
-    parser.add_argument("--temperature", default=1.0, type=float)
+    parser.add_argument("--temperature", default=0.8, type=float)
     parser.add_argument("--test", action="store_true")
 
     args = parser.parse_args()

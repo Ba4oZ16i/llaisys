@@ -4,6 +4,7 @@
 #include "llaisys/models/qwen2.h"
 #include "llaisys/tensor.h"
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 namespace llaisys::models {
@@ -38,7 +39,7 @@ public:
     Qwen2Model(LlaisysQwen2Meta meta, llaisysDeviceType_t device, int *device_id, int ndevice);
     ~Qwen2Model();
     void fillWeights(LlaisysQwen2Weights *weights);
-    int64_t infer(int64_t *token_ids, size_t ntoken);
+    int64_t infer(int64_t *token_ids, size_t ntoken, float temperature, int64_t top_k, float top_p);
 };
 
 

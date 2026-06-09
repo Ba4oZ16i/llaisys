@@ -97,7 +97,7 @@ class Qwen2:
         self,
         inputs: Sequence[int],
         max_new_tokens: int = 256,
-        top_k: int = 1,
+        top_k: int = 50,
         top_p: float = 0.8,
         temperature: float = 0.8,
     ):
@@ -106,7 +106,9 @@ class Qwen2:
         tokens=list(inputs)
         for i in range(max_new_tokens):
             c_tokens = (ctypes.c_int64*len(tokens))(*tokens)
-            new_token = self.lib.llaisysQwen2ModelInfer(self.model_, c_tokens, ctypes.c_size_t(len(tokens))
+            new_token = self.lib.llaisysQwen2ModelInfer(
+                self.model_, c_tokens, ctypes.c_size_t(len(tokens)),
+                ctypes.c_float(temperature), ctypes.c_int64(top_k), ctypes.c_float(top_p)
             )
             tokens.append(new_token)
             if new_token == self.end_token_:
