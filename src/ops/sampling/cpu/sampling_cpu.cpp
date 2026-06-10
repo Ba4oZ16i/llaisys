@@ -123,12 +123,13 @@ void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
         float cum = 0;
         float new_sum = 0;
         for (auto &p : candidates) {
-            cum += p.first;
-            if (cum > top_p) {
-                p.first = 0;
+            float prob = p.first;
+            if (cum >= top_p) {
+                p.first = 0;          // 之前已经超过阈值，后面的全置0
             } else {
-                new_sum += p.first;
+                new_sum += prob;       // cum < top_p，保留这个 token
             }
+            cum += prob;               // 累加原始概率
         }
         if (new_sum > 0) {
             float inv_new_sum = 1.0f / new_sum;
