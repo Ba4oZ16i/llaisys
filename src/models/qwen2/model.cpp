@@ -12,11 +12,10 @@
 #include "../../ops/linear/op.hpp"
 #include "../../ops/rms_norm/op.hpp"
 #include "../../ops/rope/op.hpp"
+#include "../../ops/sampling/op.hpp"
 #include "../../ops/self_attention/op.hpp"
 #include "../../ops/swiglu/op.hpp"
-#include "../../ops/argmax/op.hpp"
 #include "llaisys/tensor.h"
-
 
 namespace llaisys::models {
 Qwen2Model::Qwen2Model(LlaisysQwen2Meta meta, llaisysDeviceType_t device, int *device_id, int ndevice)
@@ -89,7 +88,7 @@ void Qwen2Model::fillWeights(LlaisysQwen2Weights *weights) {
 
 int64_t Qwen2Model::infer(int64_t *token_ids, size_t ntoken, float temperature, int64_t top_k, float top_p) {
     if (ntoken <= cache_len_) {
-        cache_len_ = 0;  // 新对话，清空 KV Cache
+        cache_len_ = 0; // 新对话，清空 KV Cache
     }
     size_t new_token_num = ntoken - cache_len_;
     tensor_t new_token_ids = Tensor::create({new_token_num}, LLAISYS_DTYPE_I64, device_, device_id_);
@@ -168,7 +167,13 @@ int64_t Qwen2Model::infer(int64_t *token_ids, size_t ntoken, float temperature, 
     re_token_voc = re_token_voc->view({meta_.voc});
     tensor_t max_idx = Tensor::create({1}, LLAISYS_DTYPE_I64, device_, device_id_);
     tensor_t max_val = Tensor::create({1}, meta_.dtype, device_, device_id_);
-    llaisys::ops::argmax(max_idx, max_val, re_token_voc);
+    tensor_t t_temp = Tensor::create({1}, LLAISYS_DTYPE_F32, device_, device_id_);
+    tensor_t t_top_k = Tensor::create({1}, LLAISYS_DTYPE_I64, device_, device_id_);
+    tensor_t t_top_p = Tensor::create({1}, LLAISYS_DTYPE_F32, device_, device_id_);
+    *reinterpret_cast<float *>(t_temp->data()) = temperature;
+    *reinterpret_cast<int64_t *>(t_top_k->data()) = top_k;
+    *reinterpret_cast<float *>(t_top_p->data()) = top_p;
+    llaisys::ops::sampling(max_idx, max_val, re_token_voc, t_temp, t_top_k, t_top_p);
 
     cache_len_ = ntoken;
     return *reinterpret_cast<int64_t *>(max_idx->data());
