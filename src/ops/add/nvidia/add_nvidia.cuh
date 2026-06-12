@@ -1,14 +1,8 @@
 #pragma once
+#include "llaisys.h"
+#include <cstddef>
 
-#include "../../tensor/tensor.hpp"
-
-namespace llaisys::ops {
-void add(tensor_t c, tensor_t a, tensor_t b);
-}
-
-#ifdef ENABLE_NVIDIA_API
 namespace llaisys::ops::nvidia {
 void add(std::byte *c, const std::byte *a, const std::byte *b,
          llaisysDataType_t type, size_t numel);
 }
-#endif
