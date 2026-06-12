@@ -72,6 +72,13 @@ class Tensor:
     def __repr__(self):
         return f"<Tensor shape={self.shape}, dtype={self.dtype}, device={self.device_type}:{self.device_id}>"
 
+    def to(self, device: DeviceType, device_id: int = 0):
+        return Tensor(
+            tensor=LIB_LLAISYS.tensorTo(
+                self._tensor, llaisysDeviceType_t(device), c_int(device_id)
+            )
+        )
+
     def load(self, data: c_void_p):
         LIB_LLAISYS.tensorLoad(self._tensor, data)
 

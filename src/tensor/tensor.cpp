@@ -231,8 +231,31 @@ tensor_t Tensor::reshape(const std::vector<size_t> &shape) const {
 }
 
 tensor_t Tensor::to(llaisysDeviceType_t device_type, int device) const {
-    TO_BE_IMPLEMENTED();
-    return std::shared_ptr<Tensor>(new Tensor(_meta, _storage));
+    tensor_t result = Tensor::create(this->shape(), this->dtype(), device_type, device);
+    llaisysMemcpyKind_t kind = LLAISYS_MEMCPY_H2H;
+    if (this->deviceType()==LLAISYS_DEVICE_CPU &&device_type == LLAISYS_DEVICE_CPU)
+    {
+        kind = LLAISYS_MEMCPY_H2H;
+        llaisys::core::context().setDevice(this->deviceType(), this->deviceId());
+    }else if (this->deviceType()==LLAISYS_DEVICE_NVIDIA &&device_type == LLAISYS_DEVICE_NVIDIA)
+    {
+        kind = LLAISYS_MEMCPY_D2D;
+        llaisys::core::context().setDevice(this->deviceType(), this->deviceId());
+    }else if (this->deviceType()==LLAISYS_DEVICE_CPU &&device_type == LLAISYS_DEVICE_NVIDIA)
+    {
+        kind = LLAISYS_MEMCPY_H2D;
+        llaisys::core::context().setDevice(device_type, device);
+    }else if (this->deviceType()==LLAISYS_DEVICE_NVIDIA &&device_type == LLAISYS_DEVICE_CPU)
+    {
+        kind = LLAISYS_MEMCPY_D2H;
+        llaisys::core::context().setDevice(this->deviceType(), this->deviceId());
+    }
+    llaisys::core::context().runtime().api()->memcpy_sync(
+        result->data(), this->data(),
+        this->numel() * this->elementSize(),
+        kind);
+
+    return result;
 }
 
 } // namespace llaisys

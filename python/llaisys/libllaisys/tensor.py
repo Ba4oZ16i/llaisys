@@ -76,3 +76,7 @@ def load_tensor(lib):
         c_size_t,  # end  : exclusive
     ]
     lib.tensorSlice.restype = llaisysTensor_t
+
+    # Function: tensorTo(llaisysTensor_t tensor, llaisysDeviceType_t device_type, int device_id);
+    lib.tensorTo.argtypes = [llaisysTensor_t, llaisysDeviceType_t, c_int]
+    lib.tensorTo.restype = llaisysTensor_t
