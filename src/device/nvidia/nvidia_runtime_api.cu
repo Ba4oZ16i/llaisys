@@ -2,55 +2,88 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cuda_runtime.h>
 
 namespace llaisys::device::nvidia {
 
 namespace runtime_api {
 int getDeviceCount() {
-    TO_BE_IMPLEMENTED();
+    int count;
+    cudaGetDeviceCount(&count);
+    return count;
 }
 
-void setDevice(int) {
-    TO_BE_IMPLEMENTED();
+void setDevice(int device_id) {
+    cudaSetDevice(device_id);
 }
 
 void deviceSynchronize() {
-    TO_BE_IMPLEMENTED();
+    cudaDeviceSynchronize();
 }
 
 llaisysStream_t createStream() {
-    TO_BE_IMPLEMENTED();
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+    return (llaisysStream_t)stream;
 }
 
 void destroyStream(llaisysStream_t stream) {
-    TO_BE_IMPLEMENTED();
+    cudaStreamDestroy((cudaStream_t)stream);
 }
 void streamSynchronize(llaisysStream_t stream) {
-    TO_BE_IMPLEMENTED();
+    cudaStreamSynchronize((cudaStream_t)stream);
 }
 
 void *mallocDevice(size_t size) {
-    TO_BE_IMPLEMENTED();
+    void *p;
+    cudaMalloc(&p, size);
+    return p;
 }
 
 void freeDevice(void *ptr) {
-    TO_BE_IMPLEMENTED();
+    cudaFree(ptr);
 }
 
 void *mallocHost(size_t size) {
-    TO_BE_IMPLEMENTED();
+    void *ptr;
+    cudaMallocHost(&ptr, size);
+    return ptr;
 }
 
 void freeHost(void *ptr) {
-    TO_BE_IMPLEMENTED();
+    cudaFreeHost(ptr);
 }
 
 void memcpySync(void *dst, const void *src, size_t size, llaisysMemcpyKind_t kind) {
-    TO_BE_IMPLEMENTED();
+    switch (kind) {
+    case LLAISYS_MEMCPY_H2D:
+        cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice);
+        break;
+    case LLAISYS_MEMCPY_D2H:
+        cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost);
+        break;
+    case LLAISYS_MEMCPY_D2D:
+        cudaMemcpy(dst, src, size, cudaMemcpyDeviceToDevice);
+        break;
+    default:
+        break;
+    }
 }
 
-void memcpyAsync(void *dst, const void *src, size_t size, llaisysMemcpyKind_t kind) {
-    TO_BE_IMPLEMENTED();
+void memcpyAsync(void *dst, const void *src, size_t size, llaisysMemcpyKind_t kind,llaisysStream_t stream) {
+    switch (kind) {
+    case LLAISYS_MEMCPY_H2D:
+        cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, (cudaStream_t)stream);
+        break;
+    case LLAISYS_MEMCPY_D2H:
+        cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToHost, (cudaStream_t)stream);
+        break;
+    case LLAISYS_MEMCPY_D2D:
+        cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToDevice, (cudaStream_t)stream);
+        break;
+    default:
+        break;
+    }
 }
 
 static const LlaisysRuntimeAPI RUNTIME_API = {

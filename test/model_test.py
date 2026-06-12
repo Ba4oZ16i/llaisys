@@ -45,7 +45,7 @@ if __name__ == "__main__":
     parser.add_argument("--device", default="cpu", choices=["cpu", "nvidia"], type=str)
     parser.add_argument("--model", default=None, type=str)
     parser.add_argument("--prompt", default="Who are you?", type=str)
-    parser.add_argument("--max_steps", default=1024, type=int)
+    parser.add_argument("--max_steps", default=4096, type=int)
     parser.add_argument("--top_p", default=0.8, type=float)
     parser.add_argument("--top_k", default=50, type=int)
     parser.add_argument("--temperature", default=0.8, type=float)

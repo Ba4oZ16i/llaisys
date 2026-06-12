@@ -33,7 +33,7 @@ class Qwen2:
         meta.nkvh=config.get("num_key_value_heads")
         meta.dh=meta.hs//meta.nh
         meta.di=config.get("intermediate_size")
-        meta.maxseq=min(config.get("max_position_embeddings"), 16384)
+        meta.maxseq=config.get("max_position_embeddings")
         meta.voc=config.get("vocab_size")
         meta.epsilon=config.get("rms_norm_eps")
         meta.theta=config.get("rope_theta")
