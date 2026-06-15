@@ -5,8 +5,6 @@
 #include <cuda_fp16.h>
 #include <cuda_runtime.h>
 
-namespace llaisys::ops::nvidia {
-
 template <typename T>
 __global__ void add_nvidia(float *c, const float *a, const float *b,
                            size_t n) {
@@ -43,6 +41,7 @@ __global__ void add_kernel_bf16(__nv_bfloat16 *c, const __nv_bfloat16 *a,
                                   __bfloat162float(b[idx]));
     }
 }
+namespace llaisys::ops::nvidia {
 
 void add(std::byte *c, const std::byte *a, const std::byte *b,
          llaisysDataType_t type, size_t numel) {

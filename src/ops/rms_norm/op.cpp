@@ -3,6 +3,7 @@
 #include "../../utils.hpp"
 #include "cpu/rms_norm.hpp"
 #include "llaisys.h"
+#include "nvidia/rms_norm_nvidia.cuh"
 
 namespace llaisys::ops {
 void rms_norm(tensor_t out, tensor_t in, tensor_t weight, float eps) {
@@ -17,6 +18,8 @@ void rms_norm(tensor_t out, tensor_t in, tensor_t weight, float eps) {
     switch (in->deviceType()) {
     case LLAISYS_DEVICE_CPU:
         return cpu::rms_norm(out->data(), in->data(), weight->data(), eps, weight->dtype(), in->shape());
+    case LLAISYS_DEVICE_NVIDIA:
+        return nvidia::rms_norm(out->data(), in->data(), weight->data(), eps, weight->dtype(), in->shape());
     default:
         EXCEPTION_UNSUPPORTED_DEVICE;
     }

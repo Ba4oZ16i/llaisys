@@ -29,7 +29,6 @@ void add(tensor_t c, tensor_t a, tensor_t b) {
         return;
     }
 
-    // Non-CPU path: dispatch to the correct device
     llaisys::core::context().setDevice(c->deviceType(), c->deviceId());
 
     switch (c->deviceType()) {

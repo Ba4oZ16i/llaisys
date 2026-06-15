@@ -55,8 +55,8 @@ def load_models(lib):
         c_void_p,
         POINTER(c_int64),
         c_size_t,
-        c_float,          # temperature
-        c_int64,           # top_k
-        c_float            # top_p
+        c_float,       
+        c_int64,         
+        c_float            
     ]
     lib.llaisysQwen2ModelInfer.restype=c_int64

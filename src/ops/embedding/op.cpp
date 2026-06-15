@@ -1,6 +1,7 @@
 #include "op.hpp"
 #include "../../utils.hpp"
 #include "cpu/embedding_cpu.hpp"
+#include "nvidia/embedding_nvidia.cuh"
 #include "llaisys.h"
 #include <cstdint>
 #include <type_traits>
@@ -11,15 +12,14 @@ void embedding(tensor_t out, tensor_t index, tensor_t weight) {
     ASSERT(out->isContiguous() && index->isContiguous() && weight->isContiguous(),
            "all tensors must be contiguous.");
     ASSERT(index->dtype() == LLAISYS_DTYPE_I64, "INT64");
-    if (weight->deviceType() == LLAISYS_DEVICE_CPU) {
-        cpu::embedding(out->data(), index->data(), weight->data(), weight->dtype(), index->numel(), weight->shape()[1]);
-    }
     llaisys::core::context().setDevice(weight->deviceType(), weight->deviceId());
     switch (weight->deviceType()) {
     case LLAISYS_DEVICE_CPU:
         return cpu::embedding(out->data(), index->data(), weight->data(), weight->dtype(), index->numel(), weight->shape()[1]);
+    case LLAISYS_DEVICE_NVIDIA:
+        return nvidia::embedding(out->data(), index->data(), weight->data(), weight->dtype(), index->numel(), weight->shape()[1]);
     default:
-      EXCEPTION_UNSUPPORTED_DEVICE;
+        EXCEPTION_UNSUPPORTED_DEVICE;
     }
 }
 } // namespace llaisys::ops
