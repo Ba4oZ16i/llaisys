@@ -97,7 +97,6 @@ int64_t Qwen2Model::infer(int64_t *token_ids, size_t ntoken, float temperature, 
     tensor_t new_token_ids = new_token_ids_cpu->to(device_, device_id_);
     tensor_t new_token_input = Tensor::create({new_token_num, meta_.hs}, meta_.dtype, device_, device_id_);
     llaisys::ops::embedding(new_token_input, new_token_ids, in_embed_.tensor);
-    // embedding done
 
     for (size_t i = 0; i < meta_.nlayer; i++) {
         // layer i

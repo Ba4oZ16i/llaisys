@@ -9,7 +9,7 @@ template <typename T>
 __global__ void embedding_nvidia_(T *out, const int64_t *index, const T *weight,
                                   size_t numel, size_t weight_shape) {
     size_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= numel)
+    if (idx >= numel * weight_shape)
         return;
     size_t i = idx / weight_shape,
            j = idx % weight_shape;
