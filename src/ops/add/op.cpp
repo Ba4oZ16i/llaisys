@@ -15,20 +15,6 @@ void add(tensor_t c, tensor_t a, tensor_t b) {
     ASSERT(c->isContiguous() && a->isContiguous() && b->isContiguous(),
            "Add: all tensors must be contiguous.");
 
-    if (c->deviceType() == LLAISYS_DEVICE_CPU) {
-        tensor_t gpu_a = a->to(LLAISYS_DEVICE_NVIDIA);
-        tensor_t gpu_b = b->to(LLAISYS_DEVICE_NVIDIA);
-        tensor_t gpu_c = Tensor::create(c->shape(), c->dtype(), LLAISYS_DEVICE_NVIDIA);
-        llaisys::core::context().setDevice(LLAISYS_DEVICE_NVIDIA, 0);
-        nvidia::add(gpu_c->data(), gpu_a->data(), gpu_b->data(),
-                    c->dtype(), c->numel());
-        llaisys::core::context().runtime().api()->memcpy_sync(
-            c->data(), gpu_c->data(),
-            c->numel() * c->elementSize(),
-            LLAISYS_MEMCPY_D2H);
-        return;
-    }
-
     llaisys::core::context().setDevice(c->deviceType(), c->deviceId());
 
     switch (c->deviceType()) {

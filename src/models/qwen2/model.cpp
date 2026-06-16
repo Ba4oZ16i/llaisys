@@ -91,12 +91,16 @@ int64_t Qwen2Model::infer(int64_t *token_ids, size_t ntoken, float temperature, 
         cache_len_ = 0; // 新对话，清空 KV Cache
     }
     size_t new_token_num = ntoken - cache_len_;
-    tensor_t new_token_ids = Tensor::create({new_token_num}, LLAISYS_DTYPE_I64, device_, device_id_);
-    std::memcpy(new_token_ids->data(), token_ids + cache_len_, new_token_num * sizeof(int64_t));
+    // 先在 CPU 上创建 token_ids，填好数据再搬到 GPU
+    tensor_t new_token_ids_cpu = Tensor::create({new_token_num}, LLAISYS_DTYPE_I64, LLAISYS_DEVICE_CPU);
+    std::memcpy(new_token_ids_cpu->data(), token_ids + cache_len_, new_token_num * sizeof(int64_t));
+    tensor_t new_token_ids = new_token_ids_cpu->to(device_, device_id_);
     tensor_t new_token_input = Tensor::create({new_token_num, meta_.hs}, meta_.dtype, device_, device_id_);
     llaisys::ops::embedding(new_token_input, new_token_ids, in_embed_.tensor);
+    // embedding done
 
     for (size_t i = 0; i < meta_.nlayer; i++) {
+        // layer i
         tensor_t normed = Tensor::create({new_token_num, meta_.hs}, meta_.dtype, device_, device_id_);
         llaisys::ops::rms_norm(normed, new_token_input, attn_norm_w_[i]->tensor, meta_.epsilon);
 
@@ -114,21 +118,24 @@ int64_t Qwen2Model::infer(int64_t *token_ids, size_t ntoken, float temperature, 
 
         tensor_t q_rope = Tensor::create({new_token_num, meta_.nh, meta_.dh}, meta_.dtype, device_, device_id_);
         tensor_t k_rope = Tensor::create({new_token_num, meta_.nkvh, meta_.dh}, meta_.dtype, device_, device_id_);
-        tensor_t pos_ids = Tensor::create({new_token_num}, LLAISYS_DTYPE_I64, device_, device_id_);
-        int64_t *p = reinterpret_cast<int64_t *>(pos_ids->data());
+        // 先在 CPU 上填好 pos_ids，再搬到 GPU
+        tensor_t pos_ids_cpu = Tensor::create({new_token_num}, LLAISYS_DTYPE_I64, LLAISYS_DEVICE_CPU);
+        int64_t *p = reinterpret_cast<int64_t *>(pos_ids_cpu->data());
         for (size_t j = 0; j < new_token_num; j++) {
             p[j] = static_cast<int64_t>(cache_len_ + j);
         }
+        tensor_t pos_ids = pos_ids_cpu->to(device_, device_id_);
         llaisys::ops::rope(q_rope, q, pos_ids, meta_.theta);
         llaisys::ops::rope(k_rope, k, pos_ids, meta_.theta);
 
         size_t elem_size = k_rope->elementSize();
-        std::memcpy(cache_k_[i]->data() + cache_len_ * meta_.nkvh * meta_.dh * elem_size,
-                    k_rope->data(),
-                    new_token_num * meta_.nkvh * meta_.dh * elem_size);
-        std::memcpy(cache_v_[i]->data() + cache_len_ * meta_.nkvh * meta_.dh * elem_size,
-                    v->data(),
-                    new_token_num * meta_.nkvh * meta_.dh * elem_size);
+        size_t copy_bytes = new_token_num * meta_.nkvh * meta_.dh * elem_size;
+        llaisys::core::context().setDevice(device_, device_id_);
+        auto *api = llaisys::core::context().runtime().api();
+        api->memcpy_sync(cache_k_[i]->data() + cache_len_ * meta_.nkvh * meta_.dh * elem_size,
+                         k_rope->data(), copy_bytes, LLAISYS_MEMCPY_D2D);
+        api->memcpy_sync(cache_v_[i]->data() + cache_len_ * meta_.nkvh * meta_.dh * elem_size,
+                         v->data(), copy_bytes, LLAISYS_MEMCPY_D2D);
 
         tensor_t cache_k = cache_k_[i]->slice(0, 0, ntoken);
         tensor_t cache_v = cache_v_[i]->slice(0, 0, ntoken);
@@ -167,15 +174,22 @@ int64_t Qwen2Model::infer(int64_t *token_ids, size_t ntoken, float temperature, 
     re_token_voc = re_token_voc->view({meta_.voc});
     tensor_t max_idx = Tensor::create({1}, LLAISYS_DTYPE_I64, device_, device_id_);
     tensor_t max_val = Tensor::create({1}, meta_.dtype, device_, device_id_);
-    tensor_t t_temp = Tensor::create({1}, LLAISYS_DTYPE_F32, device_, device_id_);
-    tensor_t t_top_k = Tensor::create({1}, LLAISYS_DTYPE_I64, device_, device_id_);
-    tensor_t t_top_p = Tensor::create({1}, LLAISYS_DTYPE_F32, device_, device_id_);
-    *reinterpret_cast<float *>(t_temp->data()) = temperature;
-    *reinterpret_cast<int64_t *>(t_top_k->data()) = top_k;
-    *reinterpret_cast<float *>(t_top_p->data()) = top_p;
-    llaisys::ops::sampling(max_idx, max_val, re_token_voc, t_temp, t_top_k, t_top_p);
+    llaisys::ops::argmax(max_idx, max_val, re_token_voc);
+    // ----------------------------------------------------------------
+    // 原 sampling 实现（保留备用）：
+    // tensor_t t_temp = Tensor::create({1}, LLAISYS_DTYPE_F32, device_, device_id_);
+    // tensor_t t_top_k = Tensor::create({1}, LLAISYS_DTYPE_I64, device_, device_id_);
+    // tensor_t t_top_p = Tensor::create({1}, LLAISYS_DTYPE_F32, device_, device_id_);
+    // *reinterpret_cast<float *>(t_temp->data()) = temperature;
+    // *reinterpret_cast<int64_t *>(t_top_k->data()) = top_k;
+    // *reinterpret_cast<float *>(t_top_p->data()) = top_p;
+    // llaisys::ops::sampling(max_idx, max_val, re_token_voc, t_temp, t_top_k, t_top_p);
+    // ----------------------------------------------------------------
 
+    // 将结果从 GPU 拷回 CPU 再读取
+    tensor_t max_idx_cpu = max_idx->to(LLAISYS_DEVICE_CPU);
+    // infer done
     cache_len_ = ntoken;
-    return *reinterpret_cast<int64_t *>(max_idx->data());
+    return *reinterpret_cast<int64_t *>(max_idx_cpu->data());
 }
 } // namespace llaisys::models
