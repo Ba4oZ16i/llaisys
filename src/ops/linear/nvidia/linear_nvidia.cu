@@ -26,7 +26,7 @@ namespace llaisys::ops::nvidia {
 void linear(std::byte *out, const std::byte *in, const std::byte *weight, const std::byte *bias,
             llaisysDataType_t type, std::vector<size_t> in_shape, std::vector<size_t> weight_shape,
             bool has_bias) {
-    dim3 blockSize(16, 16);
+    dim3 blockSize(32, 16);
     dim3 gridSize((weight_shape[0] + blockSize.x - 1) / blockSize.x,
                   (in_shape[0] + blockSize.y - 1) / blockSize.y);
     switch (type) {

@@ -26,7 +26,7 @@ __global__ void rope_(T *out, const T *in, const int64_t *pos_ids,
 
 namespace llaisys::ops::nvidia {
 void rope(std::byte *out, const std::byte *in, const std::byte *pos_ids, llaisysDataType_t type, std::vector<size_t> shape, float theta) {
-    size_t blockSize = 128;
+    size_t blockSize = 512;
     size_t gridSize = shape[0] * shape[1];
     switch (type) {
     case LLAISYS_DTYPE_F32:

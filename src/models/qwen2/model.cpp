@@ -173,21 +173,17 @@ int64_t Qwen2Model::infer(int64_t *token_ids, size_t ntoken, float temperature, 
     re_token_voc = re_token_voc->view({meta_.voc});
     tensor_t max_idx = Tensor::create({1}, LLAISYS_DTYPE_I64, device_, device_id_);
     tensor_t max_val = Tensor::create({1}, meta_.dtype, device_, device_id_);
-    llaisys::ops::argmax(max_idx, max_val, re_token_voc);
-    // ----------------------------------------------------------------
-    // 原 sampling 实现（保留备用）：
-    // tensor_t t_temp = Tensor::create({1}, LLAISYS_DTYPE_F32, device_, device_id_);
-    // tensor_t t_top_k = Tensor::create({1}, LLAISYS_DTYPE_I64, device_, device_id_);
-    // tensor_t t_top_p = Tensor::create({1}, LLAISYS_DTYPE_F32, device_, device_id_);
-    // *reinterpret_cast<float *>(t_temp->data()) = temperature;
-    // *reinterpret_cast<int64_t *>(t_top_k->data()) = top_k;
-    // *reinterpret_cast<float *>(t_top_p->data()) = top_p;
-    // llaisys::ops::sampling(max_idx, max_val, re_token_voc, t_temp, t_top_k, t_top_p);
-    // ----------------------------------------------------------------
+    // sampling 参数放 CPU 上创建，直接写入
+    tensor_t t_temp = Tensor::create({1}, LLAISYS_DTYPE_F32, LLAISYS_DEVICE_CPU);
+    tensor_t t_top_k = Tensor::create({1}, LLAISYS_DTYPE_I64, LLAISYS_DEVICE_CPU);
+    tensor_t t_top_p = Tensor::create({1}, LLAISYS_DTYPE_F32, LLAISYS_DEVICE_CPU);
+    *reinterpret_cast<float *>(t_temp->data()) = temperature;
+    *reinterpret_cast<int64_t *>(t_top_k->data()) = top_k;
+    *reinterpret_cast<float *>(t_top_p->data()) = top_p;
+    llaisys::ops::sampling(max_idx, max_val, re_token_voc, t_temp, t_top_k, t_top_p);
 
-    // 将结果从 GPU 拷回 CPU 再读取
+    // 结果从 GPU 拷回 CPU 读取
     tensor_t max_idx_cpu = max_idx->to(LLAISYS_DEVICE_CPU);
-    // infer done
     cache_len_ = ntoken;
     return *reinterpret_cast<int64_t *>(max_idx_cpu->data());
 }

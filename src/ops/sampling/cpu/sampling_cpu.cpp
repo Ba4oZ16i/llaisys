@@ -1,6 +1,6 @@
+#include "sampling_cpu.hpp"
 #include "../../../utils.hpp"
 #include "llaisys.h"
-#include "sampling_cpu.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -16,7 +16,7 @@ void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
     if ((top_k <= 0 || (size_t)top_k >= numel) && top_p >= 1.0f) {
         float inv_temp = (temperature > 1e-6f) ? (1.0f / temperature) : 1.0f;
         float max_val = -std::numeric_limits<float>::infinity();
-#pragma omp parallel for reduction(max:max_val)
+#pragma omp parallel for reduction(max : max_val)
         for (size_t i = 0; i < numel; i++) {
             float v;
             if constexpr (std::is_same_v<T, llaisys::bf16_t> || std::is_same_v<T, llaisys::fp16_t>) {
@@ -28,7 +28,7 @@ void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
                 max_val = v;
         }
         float sum = 0;
-#pragma omp parallel for reduction(+:sum)
+#pragma omp parallel for reduction(+ : sum)
         for (size_t i = 0; i < numel; i++) {
             if constexpr (std::is_same_v<T, llaisys::bf16_t> || std::is_same_v<T, llaisys::fp16_t>) {
                 sum += std::exp(llaisys::utils::cast<float>(vals[i]) * inv_temp - max_val);
@@ -59,7 +59,7 @@ void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
     std::vector<float> logits(numel);
     float inv_temp = (temperature > 1e-6f) ? (1.0f / temperature) : 1.0f;
     float max_val = -std::numeric_limits<float>::infinity();
-#pragma omp parallel for reduction(max:max_val)
+#pragma omp parallel for reduction(max : max_val)
     for (size_t i = 0; i < numel; i++) {
         float v;
         if constexpr (std::is_same_v<T, llaisys::bf16_t> || std::is_same_v<T, llaisys::fp16_t>) {
@@ -72,7 +72,7 @@ void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
             max_val = v;
     }
     float sum = 0;
-#pragma omp parallel for reduction(+:sum)
+#pragma omp parallel for reduction(+ : sum)
     for (size_t i = 0; i < numel; i++) {
         logits[i] = std::exp(logits[i] - max_val);
         sum += logits[i];
@@ -83,11 +83,6 @@ void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
         logits[i] *= inv_sum;
     }
 
-
-
-
-
-    
     std::vector<std::pair<float, size_t>> candidates;
     if (top_k > 0 && (size_t)top_k < numel) {
         std::vector<float> copy = logits;
@@ -125,11 +120,11 @@ void sampling_(int64_t *idx, T *val, const T *vals, size_t numel,
         for (auto &p : candidates) {
             float prob = p.first;
             if (cum >= top_p) {
-                p.first = 0;          // 之前已经超过阈值，后面的全置0
+                p.first = 0; // 之前已经超过阈值，后面的全置0
             } else {
-                new_sum += prob;       // cum < top_p，保留这个 token
+                new_sum += prob; // cum < top_p，保留这个 token
             }
-            cum += prob;               // 累加原始概率
+            cum += prob; // 累加原始概率
         }
         if (new_sum > 0) {
             float inv_new_sum = 1.0f / new_sum;

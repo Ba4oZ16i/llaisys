@@ -44,13 +44,13 @@ __global__ void fin_rms(T *out, const T *in, const T *weights, float eps,
 
 template <typename T>
 void rms_norm_(T *out, const T *in, const T *weight, float eps, std::vector<size_t> shape) {
-    size_t blockSize1 = 128;
+    size_t blockSize1 = 512;
     size_t gridSize1 = shape[0];
     size_t shared_bytes = blockSize1 * sizeof(float);
     float *temp_sum;
     cudaMalloc(&temp_sum, gridSize1 * sizeof(float));
     get_sum<T><<<gridSize1, blockSize1, shared_bytes>>>(temp_sum, in, shape[1]);
-    dim3 blockSize2(16, 16);
+    dim3 blockSize2(32, 16);
     dim3 gridSize2((shape[1] + blockSize2.x - 1) / blockSize2.x,
                    (shape[0] + blockSize2.y - 1) / blockSize2.y);
     fin_rms<T><<<gridSize2, blockSize2>>>(out, in, weight, eps, shape[0], shape[1], temp_sum);

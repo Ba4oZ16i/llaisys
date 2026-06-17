@@ -19,7 +19,7 @@ def load_llaisys_model(model_path, device_name):
     return model
 
 
-def llaisys_infer(conversation, tokenizer, model, max_new_tokens=512, top_p=0.8, top_k=50, temperature=0.8):
+def llaisys_infer(conversation, tokenizer, model, max_new_tokens=4096, top_p=0.8, top_k=50, temperature=0.8):
     input_content = tokenizer.apply_chat_template(
         conversation=conversation,
         add_generation_prompt=True,

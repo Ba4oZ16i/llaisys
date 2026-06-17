@@ -5,3 +5,11 @@ Style:
   BasedOnStyle: LLVM
   IndentWidth: 4
   ColumnLimit: 0
+  BreakBeforeBraces: Allman
+  AllowShortFunctionsOnASingleLine: None
+  AllowShortIfStatementsOnASingleLine: false
+  AllowShortLoopsOnASingleLine: false
+  Cpp11BracedListStyle: false
+  IndentCaseLabels: true
+  NamespaceIndentation: None
+  AlignAfterOpenBracket: Align

@@ -2,9 +2,9 @@
 #include "argmax_nvidia.cuh"
 #include "llaisys.h"
 #include <cstddef>
-#include <type_traits>
-#include <cuda_fp16.h>
 #include <cuda_bf16.h>
+#include <cuda_fp16.h>
+#include <type_traits>
 using bf16 = __nv_bfloat16;
 
 template <typename T>
@@ -53,7 +53,7 @@ __global__ void block_argmax(val_idx<T> *block_results, const T *vals, size_t nu
 
 template <typename T>
 __global__ void final_argmax(long *max_idx, T *max_val,
-                              const val_idx<T> *block_results, size_t num_blocks) {
+                             const val_idx<T> *block_results, size_t num_blocks) {
     size_t tid = threadIdx.x;
     extern __shared__ char smem[];
     auto *shareMem = reinterpret_cast<val_idx<T> *>(smem);

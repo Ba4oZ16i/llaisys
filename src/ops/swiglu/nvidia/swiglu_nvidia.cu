@@ -17,7 +17,7 @@ __global__ void swiglu_(T *out, const T *gate, const T *up, size_t numel) {
 
 namespace llaisys::ops::nvidia {
 void swiglu(std::byte *out, const std::byte *gate, const std::byte *up, llaisysDataType_t type, size_t numel) {
-    size_t blockSize = 256;
+    size_t blockSize = 512;
     size_t gridSize = (numel + blockSize - 1) / blockSize;
     switch (type) {
     case LLAISYS_DTYPE_F32:

@@ -101,7 +101,7 @@ __global__ void AV4ATTN(T *attn_val, float *temp_A,const T *V,
 template <typename T>
 void self_attention_(T *attn_val, const T *Q, const T *K, const T *V, float scale,
                      std::vector<size_t> q_shape, std::vector<size_t> kv_shape) {
-    size_t blockSize1 = 128;
+    size_t blockSize1 = 512;
     size_t gridSize1 = q_shape[0] * q_shape[1];
     float *temp_A;
     cudaMalloc(&temp_A, q_shape[0] * q_shape[1] * kv_shape[0] * sizeof(float));
@@ -110,7 +110,7 @@ void self_attention_(T *attn_val, const T *Q, const T *K, const T *V, float scal
     size_t shareMem = (blockSize1 + 1) * sizeof(float);
     casual_softmax<<<gridSize1, blockSize1, shareMem>>>(temp_A, q_shape[0], q_shape[1], kv_shape[0]);
     cudaDeviceSynchronize();
-    size_t blockSize2 = 256;
+    size_t blockSize2 = 512;
     AV4ATTN<T><<<gridSize1, blockSize2>>>(attn_val, temp_A, V, kv_shape[0], q_shape[1], kv_shape[1], kv_shape[2]);
     cudaDeviceSynchronize();
     cudaFree(temp_A);
